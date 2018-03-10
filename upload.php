@@ -29,6 +29,14 @@
 
     echo '<br>';
 
+    /*$teks = preg_replace('/[^a-zA-Z -]/', '', $string);
+
+    $teks2 = preg_replace('/\b\w\b\s?/', '', $teks);
+
+    $teks3 = preg_replace('/\s\s+/', ' ', $teks2);
+
+    $teks4 = preg_replace('/[-\n\r]/', ' ', $teks3);*/
+
     $teks = preg_replace('/[^a-zA-Z -]/', '', $string);
 
     $teks2 = preg_replace('/\b\w\b\s?/', '', $teks);
@@ -37,12 +45,11 @@
 
     $teks4 = preg_replace('/[-\n\r]/', ' ', $teks3);
 
-
     $teks5 = strtolower($teks4);
 
-    //echo $teks5;
+    echo $teks5;
 
-    $teks6 = explode(" ",$teks5);
+    /*$teks6 = explode(" ",$teks5);
 
     //var_dump($teks5);
 
@@ -65,26 +72,30 @@
 
     $filteredarray = array_diff($teks6,$stopword);
 
+    print_r($filteredarray);
+
     $teks7 = implode(" ",$filteredarray);
 
     echo $teks7;
 
     foreach($filteredarray as $filteredarray){
  
-        if (strlen($filteredarray) >=2)
+        /*if (strlen($filteredarray) >=2)
         {
 
             $insert = "INSERT INTO dokumen (nama_file, tokenstem) VALUES('$nama_file', '$filteredarray')";
 
-            $conn->query($insert); 
+            $conn->query($insert);
+
+            echo mysql_error();
                
-              }
+              //}
     }
 
 
     //$sql = "INSERT INTO upload (teks) VALUES ('$teks8')";
 
     //$conn->query($sql);
-
+*/
 
 ?>

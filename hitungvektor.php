@@ -2,9 +2,9 @@
 
 include 'connect.php';
 
-mysqli_query($conn, "TRUNCATE TABLE tbvektor");
+mysqli_query($conn, "TRUNCATE TABLE tbvektor_copy");
 
-$resDocId = mysqli_query($conn, "SELECT DISTINCT docid FROM tbindex");
+$resDocId = mysqli_query($conn, "SELECT DISTINCT docid FROM tbindex_copy");
 
 $num_rows = mysqli_num_rows($resDocId);
 
@@ -15,7 +15,7 @@ while($rowDocId = mysqli_fetch_array($resDocId)) {
 
 	$docId = $rowDocId['docid'];
 
-	$resVektor = mysqli_query($conn, "SELECT bobot FROM tbindex WHERE docid = '$docId'");
+	$resVektor = mysqli_query($conn, "SELECT bobot FROM tbindex_copy WHERE docid = '$docId'");
 	
 	$panjangVektor = 0;		
 	while($rowVektor = mysqli_fetch_array($resVektor)) {
@@ -24,7 +24,7 @@ while($rowDocId = mysqli_fetch_array($resDocId)) {
 	
 	$panjangVektor = sqrt($panjangVektor);
 			
-	$resInsertVektor = mysqli_query($conn, "INSERT INTO tbvektor (docId, panjang) VALUES ('$docId', $panjangVektor)");	
+	$resInsertVektor = mysqli_query($conn, "INSERT INTO tbvektor_copy (docId, panjang) VALUES ('$docId', $panjangVektor)");	
 }
 
 

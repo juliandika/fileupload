@@ -3,8 +3,8 @@
 
 	include 'connect.php';
 
-	mysqli_query($conn, "TRUNCATE TABLE tbindex");
-	$resn = "INSERT INTO tbindex (term, docid, count) SELECT tokenstem,nama_file,count(*) FROM dokumen group by nama_file,tokenstem";
+	mysqli_query($conn, "TRUNCATE TABLE tbindex_copy");
+	$resn = "INSERT INTO tbindex_copy (term, docid, count) SELECT tokenstem,nama_file,count(*) FROM dok_copy GROUP BY nama_file,tokenstem";
 
 	if ($conn->query($resn) === TRUE) {
     echo "New record created successfully";
@@ -15,10 +15,10 @@
 
 	$n = mysqli_num_rows($resn);
 	
-	$resn = mysqli_query($conn, "SELECT DISTINCT docid FROM tbindex");
+	$resn = mysqli_query($conn, "SELECT DISTINCT docid FROM tbindex_copy");
 	$n = mysqli_num_rows($resn);
 
-	$resBobot = mysqli_query($conn, "SELECT * FROM tbindex ORDER BY Id");
+	$resBobot = mysqli_query($conn, "SELECT * FROM tbindex_copy ORDER BY Id");
 	$num_rows = mysqli_num_rows($resBobot);
 	print("Terdapat " . $num_rows . " Term yang diberikan bobot. <br />");
 
@@ -29,13 +29,13 @@
 		$id = $rowbobot['id'];
 		
 		
-		$resNTerm = mysqli_query($conn, "SELECT Count(*) as N FROM tbindex WHERE Term = '$term'");
+		$resNTerm = mysqli_query($conn, "SELECT Count(*) as N FROM tbindex_copy WHERE Term = '$term'");
 		$rowNTerm = mysqli_fetch_array($resNTerm);
 		$NTerm = $rowNTerm['N'];
 		
 		$w = $tf * log($n/$NTerm);
 		
-		$resUpdateBobot = mysqli_query($conn, "UPDATE tbindex SET Bobot = $w WHERE Id = $id");		
+		$resUpdateBobot = mysqli_query($conn, "UPDATE tbindex_copy SET Bobot = $w WHERE Id = $id");		
   	}
 
 ?>
