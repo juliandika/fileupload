@@ -4,7 +4,7 @@
 	include 'connect.php';
 
 	mysqli_query($conn, "TRUNCATE TABLE tbindex_copy");
-	$resn = "INSERT INTO tbindex_copy (term, docid, count) SELECT tokenstem,nama_file,count(*) FROM dok_copy GROUP BY nama_file,tokenstem";
+	$resn = "INSERT INTO tbindex_copy (term, docid, count) SELECT tokenstem,nama_file,count(*) FROM dok2 GROUP BY nama_file,tokenstem";
 
 	if ($conn->query($resn) === TRUE) {
     echo "New record created successfully";
@@ -28,12 +28,11 @@
 		$tf = $rowbobot['count'];
 		$id = $rowbobot['id'];
 		
-		
 		$resNTerm = mysqli_query($conn, "SELECT Count(*) as N FROM tbindex_copy WHERE Term = '$term'");
 		$rowNTerm = mysqli_fetch_array($resNTerm);
 		$NTerm = $rowNTerm['N'];
 		
-		$w = $tf * log($n/$NTerm);
+		$w = $tf * log10($n/$NTerm);
 		
 		$resUpdateBobot = mysqli_query($conn, "UPDATE tbindex_copy SET Bobot = $w WHERE Id = $id");		
   	}

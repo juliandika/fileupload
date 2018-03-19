@@ -1,14 +1,15 @@
 <?php
 
 
-
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
 include 'connect.php';
 
-$sql = mysqli_query($conn, "SELECT * FROM semua WHERE id >= 1751 AND id <= 1840");
+$sql = mysqli_query($conn, "SELECT * FROM semua WHERE id <= 20");
 
 while($row = mysqli_fetch_array($sql)) {
  	
- 	echo $row['clean_teks'];
+ 	//echo $row['clean_teks'];
 
  	$arr = $row['clean_teks'];
 
@@ -22,13 +23,15 @@ while($row = mysqli_fetch_array($sql)) {
 
  		if(!empty($filter[$i]) && strlen($filter[$i]) > 2){
 
-            mysqli_query($conn, "INSERT INTO dok_copy (nama_file, tokenstem) VALUES('$nama_file', '$filter[$i]')");
+ 			echo $filter[$i]. "<br>";
+
+            mysqli_query($conn, "INSERT INTO dok_copy (nama_file, tokenstem) VALUES('".$nama_file."', '".$filter[$i]."')");
+            
 
         }
 
               
     }
-
 
 }
 

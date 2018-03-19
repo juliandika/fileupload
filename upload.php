@@ -49,7 +49,7 @@
 
     echo $teks5;
 
-    /*$teks6 = explode(" ",$teks5);
+    $teks6 = explode(" ",$teks5);
 
     //var_dump($teks5);
 
@@ -70,32 +70,20 @@
     }
 
 
-    $filteredarray = array_diff($teks6,$stopword);
+    $filter = array_diff($teks6,$stopword);
 
-    print_r($filteredarray);
+    print_r($filter);
 
-    $teks7 = implode(" ",$filteredarray);
+    for($i=0; $i<count($filter); $i++){
 
-    echo $teks7;
+        if(!empty($filter[$i]) && strlen($filter[$i]) > 2){
 
-    foreach($filteredarray as $filteredarray){
- 
-        /*if (strlen($filteredarray) >=2)
-        {
+            mysqli_query($conn, "INSERT INTO dok_2 (nama_file, tokenstem) VALUES('".$nama_file."', '".$filter[$i]."')");
 
-            $insert = "INSERT INTO dokumen (nama_file, tokenstem) VALUES('$nama_file', '$filteredarray')";
+            echo "jajda";
+        }
 
-            $conn->query($insert);
-
-            echo mysql_error();
-               
-              //}
+              
     }
-
-
-    //$sql = "INSERT INTO upload (teks) VALUES ('$teks8')";
-
-    //$conn->query($sql);
-*/
 
 ?>

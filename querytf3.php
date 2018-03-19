@@ -4,6 +4,8 @@ include 'connect.php';
 
 $query = $_GET['keyword'];
 
+//$query = implode(' ', array_unique(explode(' ', $raw_query)));
+//mysqli_query($conn, "TRUNCATE TABLE tbcache");
 mysqli_query($conn, "TRUNCATE TABLE tbcache");
 
 function hitungsim($query) {
@@ -24,7 +26,9 @@ function hitungsim($query) {
 	$aBobotQuery = array();
 	$aBobotSinonim = array();
 	$adaSinonim = array();
+	$adaTerm = array();
 
+	echo "Query: <br>";
 	echo '<pre>'; print_r($aquery); echo '</pre>';
 	
 	for ($i=0; $i<count($aquery); $i++) {
@@ -35,6 +39,14 @@ function hitungsim($query) {
 
 		$rowNTerm = mysqli_fetch_array($resNTerm);
 
+		$numRow = mysqli_num_rows($resNTerm);
+
+
+		echo "Jumlah term = " . $numRow . "<br>";
+
+		echo "Num row ";
+		print_r($numRow);
+
 		echo '<pre>'; print_r($rowNTerm); echo '</pre>';
 
 		echo $n;
@@ -43,9 +55,11 @@ function hitungsim($query) {
 
 		echo '<br>NTerm = ' . $NTerm . '<br>';
 
-		if($NTerm > 0) {
+		if($NTerm != 0) {
 
-			$idf = log($n/$NTerm);
+			$adaTerm[$i] = 1;
+
+			$idf = log10($n/$NTerm);
 
 			echo "IDF = " . $idf . '<br>';
 
@@ -67,60 +81,82 @@ function hitungsim($query) {
 
 	   		if($res->num_rows > 0){
 
-				while($row = $res->fetch_assoc()){
+		   			$adaSinonim[$i] = 1;
 
-					$sinonim = $row["sinonim"];
+					while($row = $res->fetch_assoc()){
 
-	            	$asinonim = explode(",", $sinonim);
+						$sinonim = $row["sinonim"];
 
-	            	echo "Sinonim: " . '<pre>'; print_r($asinonim); echo '</pre>';
+		            	$asinonim = explode(",", $sinonim);
+
+		            	echo "Sinonim: " . '<pre>'; print_r($asinonim); echo '</pre>';
+
+					}
+
+					for($j=0; $j<count($asinonim); $j++){
+
+						echo '<pre>'; print_r($adaSinonim); echo '</pre>';
+
+						$idf_sinonim = 0.5 * $idf;
+
+						$aBobotSinonim[] = $idf_sinonim;
+
+						echo "Bobot sinonim: " . $asinonim[$j] . '<pre>'; print_r($aBobotSinonim); echo '</pre>';
+
+						$panjangQuerySinonim = $panjangQuerySinonim + $idf_sinonim * $idf_sinonim;
+
+						echo "Panjang Query Sinonim = " . $panjangQuerySinonim . "<br>";
+
+					}
 
 				}
+				else
+				{
 
-				for($j=0; $j<count($asinonim); $j++){
+					$adaTerm[$i] = 1;
+					$adaSinonim[$i] = 0;
 
-					$adaSinonim[$i] = 1;
-
-					echo '<pre>'; print_r($adaSinonim); echo '</pre>';
-
-					$idf_sinonim = 0.5 * $idf;
-
-					$aBobotSinonim[] = $idf_sinonim;
-
-					echo "Bobot sinonim: " . $asinonim[$j] . '<pre>'; print_r($aBobotSinonim); echo '</pre>';
-
-					$panjangQuerySinonim = $panjangQuerySinonim + $idf_sinonim * $idf_sinonim;
-
-					echo "Panjang Query Sinonim = " . $panjangQuerySinonim . "<br>";
-
-				}
 			}
-			else
-			{
-
-				$adaSinonim[$i] = 0;
-			}
-
-		
 			//echo $panjangQuery . "<br>";
 			//echo $panjangQuerySinonim . "<br>";
-		} //endif
+		}else{
+
+
+			$adaTerm[$i] = 0;
+			$adaSinonim[$i] = 0;
+			$aBobotQuery[$i] = 0;
+
+
+
+		}
 
 	} //endfor
 
+	echo "Panjang Query Awal = " . $panjangQuery . "<br>";
+
+	echo "Ada term: ";
+
+	'<pre>'; print_r($adaTerm); echo '</pre>';
+
+	echo "<br>";
 	
+	echo "Ada sinonim: ";
+
+	'<pre>'; print_r($adaSinonim); echo '</pre>';
+
+	echo "<br>";
+
 	$panjangQueryTotal = sqrt($panjangQuery + $panjangQuerySinonim);
 
-	echo $panjangQueryTotal;
-
-	print_r($adaSinonim);
+	echo "Panjang query total  = " . $panjangQueryTotal . "<br><br>";
 	
 	$jumlahmirip = 0;
 	
 	$resDocId = mysqli_query($conn, "SELECT * FROM tbvektor_copy ORDER BY docid");
 	while ($rowDocId = mysqli_fetch_array($resDocId)) {
 	
-		$dotproduct = 0;
+		$dotproduct1 = 0;
+		$dotproduct2 = 0;
 			
 		$docId = $rowDocId['docid'];
 		$panjangDocId = $rowDocId['panjang'];
@@ -128,25 +164,43 @@ function hitungsim($query) {
 		$resTerm = mysqli_query($conn, "SELECT * FROM tbindex_copy WHERE docid = '$docId'");
 		
 		while ($rowTerm = mysqli_fetch_array($resTerm)) {
+
+
 			for ($i=0; $i<count($aquery); $i++) {
+				//'<pre>'; print_r($aquery); echo '</pre>';
 
-				if(!empty($aBobotQuery[$i])){
 
-						if ($rowTerm['term'] == $aquery[$i]) {
-							$dotproduct = $dotproduct + $rowTerm['bobot'] * $aBobotQuery[$i];
+				if($adaTerm[$i] == 1){
+					//echo '<pre>'; print_r($aBobotQuery); echo '</pre>';
 
-							//echo "Query" . $dotproduct . "<br>";	
-							
-						}
+					if ($rowTerm['term'] == $aquery[$i]) {
 
-					if($adaSinonim[$i] == 1){
+						echo "Term Query Awal: " . $aquery[$i] . "<br>";
+						echo "Row term Query Awal pd Doc: " . $rowTerm['bobot'] . "<br>";
+						echo "BobotQuery Awal pd Q : " . $aBobotQuery[$i] . "<br>";
+						echo "Q * D : " . ($aBobotQuery[$i] *  $rowTerm['bobot']). "<br>";
+
+						$dotproduct1 = $dotproduct1 + $rowTerm['bobot'] * $aBobotQuery[$i];
+
+						echo "Dot product 1 : " . $dotproduct1 . "<br><br>";
+						
+
+					}
+
+					if(($adaSinonim[$i] == 1) && ($adaTerm[$i] == 1)){
 
 						for ($j=0; $j<count($asinonim); $j++) {
 
 							if ($rowTerm['term'] == $asinonim[$j]) {
 
-								$dotproduct = $dotproduct + $rowTerm['bobot'] * $aBobotSinonim[$j];
+								$dotproduct2 = $dotproduct2 + $rowTerm['bobot'] * $aBobotSinonim[$j];
 
+								echo "Term Sinonim: " . $asinonim[$j] . "<br>";
+								echo "Row term Sinonim pd Doc: " . $rowTerm['bobot'] . "<br>";
+								echo "BobotSinonim pd Q: " . $aBobotSinonim[$j] . "<br>";
+								echo "Q * D : " . ($aBobotSinonim[$j] *  $rowTerm['bobot']). "<br>";
+								echo "Dot product 2 : " . $dotproduct2 . "<br>";
+								
 								//echo "Query exp " . $dotproduct . "<br>";	
 								
 								} //endif	
@@ -155,11 +209,21 @@ function hitungsim($query) {
 					} //endif
 				}
 			}
-		$dotproduct2 = $dotproduct;
 
-		if ($dotproduct2 != 0) {
-			$sim = $dotproduct2 / ($panjangQueryTotal * $panjangDocId);
+		if (($dotproduct1 != 0) || ($dotproduct2 != 0)) {
 
+			echo "Dot product1 total = " . $dotproduct1 . "<br>";
+			echo "Dot product2  total = " . $dotproduct2 . "<br>";
+
+			$sim = ($dotproduct1 + $dotproduct2) / ($panjangQueryTotal * $panjangDocId);
+
+			echo "Panjang query total : "  . $panjangQueryTotal . "<br>";
+			echo "Dot product total : "  . ($dotproduct1 + $dotproduct2) . "<br>";
+			echo "Query * Bobot DocId total : "  . ($panjangQueryTotal * $panjangDocId) . "<br>";
+			echo "Sim = " . $sim  . "<br>";
+
+			echo "<br>";
+			echo "<hr>";
 			$resInsertCache = mysqli_query($conn, "INSERT INTO tbcache (query, docid, nilai) VALUES ('$query', '$docId', $sim)");
 			$jumlahmirip++;
 		} 
@@ -174,7 +238,7 @@ hitungsim($query);
 
 $result = mysqli_query($conn, "SELECT DISTINCT judul, nama, nama_jurusan, label, semua.doc AS nama_doc, nilai FROM semua INNER JOIN tbcache ON semua.doc = tbcache.docid ORDER BY nilai DESC");
 
-echo "<table>";
+echo "<table border=1>";
 echo "<tr>";
 echo "<th>"; echo "Judul"; echo "</th>";
 echo "<th>"; echo "Nama"; echo "</th>";

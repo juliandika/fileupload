@@ -1,7 +1,14 @@
 <?php
 
-$res = log(1.5);
 
-echo $res;
+$res = "akuntansi audit bank akuntan auditor akuntan audit";
+
+
+echo $res . "<br>";
+
+$string = implode(' ', array_unique(explode(' ', $res)));
+
+
+echo $string;
 
 ?>
