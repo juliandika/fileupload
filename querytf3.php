@@ -1,5 +1,7 @@
 <?php
 
+$start5 = microtime(true);
+error_reporting(0);
 include 'connect.php';
 
 $query = $_GET['keyword'];
@@ -12,7 +14,9 @@ function hitungsim($query) {
 
 	include 'connect.php';
 
-	$sql = "SELECT Count(*) as n FROM tbvektor_copy";
+	$result = array();
+
+	$sql = "SELECT Count(*) as n FROM tbvektor";
 
 	$resn = $conn->query($sql);
 
@@ -27,58 +31,73 @@ function hitungsim($query) {
 	$aBobotSinonim = array();
 	$adaSinonim = array();
 	$adaTerm = array();
+	$query = array();
+	$index = array();
+	$vektor = array();
+	$querytotal = array();
+	$totalSinonim = array();
 
 	echo "Query: <br>";
 	echo '<pre>'; print_r($aquery); echo '</pre>';
 	
 	for ($i=0; $i<count($aquery); $i++) {
 
-		$sql2 = "SELECT Count(*) as N from tbindex_copy WHERE term like '$aquery[$i]'";       
+		$start1 = microtime(true);
 
-		$resNTerm = $conn->query($sql2);
+		//$sql2 = "SELECT Count(*) as N from tbindex WHERE term like '$aquery[$i]'";
 
-		$rowNTerm = mysqli_fetch_array($resNTerm);
+		$sql3 = mysqli_query($conn, "SELECT * FROM tbindex WHERE term like '$aquery[$i]' LIMIT 1");
 
-		$numRow = mysqli_num_rows($resNTerm);
+		if(mysqli_num_rows($sql3) > 0){
+
+			while($row = mysqli_fetch_array($sql3)){
+
+				  // OR just echo the data:
+
+				  $idf = $row['bobot'] / $row['freq'];
+
+				  echo "Bobot: " . $idf . "<br><br>";
+
+				  
+				  $aBobotQuery[] = $idf;
+
+				  $query[] = $row['term'];
+
+				  echo "Bobot query" . "<br>";
+				  echo "<pre>";
+				  print_r($aBobotQuery);
+				  echo "</pre>";
+
+				  echo "Query" . "<br>";
+				  echo "<pre>";
+				  print_r($query);
+				  echo "</pre>";
+
+				  $panjangQuery = $panjangQuery + $idf * $idf;
+
+				  echo "panjang query" . $panjangQuery;
+
+				  
+				  $AdaTerm = 1;
+			}
 
 
-		echo "Jumlah term = " . $numRow . "<br>";
 
-		echo "Num row ";
-		print_r($numRow);
+		}
 
-		echo '<pre>'; print_r($rowNTerm); echo '</pre>';
+		
 
-		echo $n;
+		if($AdaTerm = 1) {
 
-		$NTerm = $rowNTerm['N'];
+			//$adaTerm[$i] = 1;
 
-		echo '<br>NTerm = ' . $NTerm . '<br>';
-
-		if($NTerm != 0) {
-
-			$adaTerm[$i] = 1;
-
-			$idf = log10($n/$NTerm);
-
-			echo "IDF = " . $idf . '<br>';
-
-			echo "Jumlah Dokumen = " . $n . '<br>';
-
-			echo "Jumlah Term  " . $aquery[$i] . " = " . $NTerm . '<br>';
-
-			$aBobotQuery[] = $idf;
-
-			echo '<pre>'; print_r($aBobotQuery); echo '</pre>';
-
-			$panjangQuery = $panjangQuery + $idf * $idf;
-
-			echo "Panjang query = " . $panjangQuery . "<br>";
+			echo "<br>" . "Teshello" . "<br>";
 
 			$sin = "SELECT * FROM sinonim WHERE kata LIKE '$aquery[$i]'";
-			
-	    	$res = $conn->query($sin);
 
+	    	$res = $conn->query($sin);
+			
+	   		
 	   		if($res->num_rows > 0){
 
 		   			$adaSinonim[$i] = 1;
@@ -87,39 +106,54 @@ function hitungsim($query) {
 
 						$sinonim = $row["sinonim"];
 
-		            	$asinonim = explode(",", $sinonim);
+		            	$asinonim = explode(" ", $sinonim);
 
 		            	echo "Sinonim: " . '<pre>'; print_r($asinonim); echo '</pre>';
 
+
+		            	for($j=0; $j<count($asinonim); $j++){
+
+						
+							echo '<pre>'; print_r($adaSinonim); echo '</pre>';
+
+							$idf_sinonim = 0.5 * $idf;
+
+							$aBobotSinonim[] = $idf_sinonim;
+
+							echo "Bobot sinonim: " . $asinonim[$j] . '<pre>'; print_r($aBobotSinonim); echo '</pre>';
+
+							$panjangQuerySinonim = $panjangQuerySinonim + $idf_sinonim * $idf_sinonim;
+
+							//echo "Panjang Query Sinonim = " . $panjangQuerySinonim . "<br>";
+
+							$totalSinonim[] = $asinonim[$j];
+						
+
+						}
+
+						
+
 					}
 
-					for($j=0; $j<count($asinonim); $j++){
+					
 
-						echo '<pre>'; print_r($adaSinonim); echo '</pre>';
+					
 
-						$idf_sinonim = 0.5 * $idf;
-
-						$aBobotSinonim[] = $idf_sinonim;
-
-						echo "Bobot sinonim: " . $asinonim[$j] . '<pre>'; print_r($aBobotSinonim); echo '</pre>';
-
-						$panjangQuerySinonim = $panjangQuerySinonim + $idf_sinonim * $idf_sinonim;
-
-						echo "Panjang Query Sinonim = " . $panjangQuerySinonim . "<br>";
-
-					}
-
-				}
+				}/*
 				else
 				{
 
 					$adaTerm[$i] = 1;
 					$adaSinonim[$i] = 0;
 
-			}
+					$querytotal = $query;
+
+			}*/
 			//echo $panjangQuery . "<br>";
 			//echo $panjangQuerySinonim . "<br>";
-		}else{
+		}/*else{
+
+			echo "Tidak ditemukan term";
 
 
 			$adaTerm[$i] = 0;
@@ -128,118 +162,228 @@ function hitungsim($query) {
 
 
 
-		}
+		}*/
 
 	} //endfor
 
-	echo "Panjang Query Awal = " . $panjangQuery . "<br>";
+	$querytotal = array_merge($query, $totalSinonim);
 
-	echo "Ada term: ";
+	echo "Query total haha";
+	echo "<pre>";
+   	print_r($querytotal);
+	echo "</pre>";
 
-	'<pre>'; print_r($adaTerm); echo '</pre>';
 
-	echo "<br>";
+	echo "Asinonim";
+	echo "<pre>";
+   	print_r($asinonim);
+	echo "</pre>";
+
+	echo "Total sinonim";
+	echo "<pre>";
+   	print_r($totalSinonim);
+	echo "</pre>";
+
+
+	echo "Bobot sinonim";
+	echo "<pre>";
+   	print_r($aBobotSinonim);
+	echo "</pre>";
+
+
+	echo "Bobot query 2";
+	echo "<pre>";
+   	print_r($aBobotQuery);
+	echo "</pre>";
+
+	$end3 = microtime(true);
+
+
+	//echo "Panjang Query Awal = " . $panjangQuery . "<br>";
+
+	//echo "Ada term: ";
+
+	//'<pre>'; print_r($adaTerm); echo '</pre>';
+
+	//echo "<br>";
 	
-	echo "Ada sinonim: ";
+	//echo "Ada sinonim: ";
 
-	'<pre>'; print_r($adaSinonim); echo '</pre>';
+	//'<pre>'; print_r($adaSinonim); echo '</pre>';
 
-	echo "<br>";
+	//echo "<br>";
+
+	$start4 = microtime(true);
 
 	$panjangQueryTotal = sqrt($panjangQuery + $panjangQuerySinonim);
 
-	echo "Panjang query total  = " . $panjangQueryTotal . "<br><br>";
+	echo "Panjang query total: " . $panjangQueryTotal . "<br>";
+
+
+	echo "Query gabungan: ";
+	echo "<pre>";
+	print_r($querytotal);
+	echo "</pre>";
+
+
+	echo "Query awal: ";
+	echo "<pre>";
+	print_r($query);
+	echo "</pre>";
+
+
+	for ($i=0; $i<count($querytotal); $i++) {
+
+		$sql4 = mysqli_query($conn, "SELECT * FROM tbindex WHERE term like '$querytotal[$i]'");
+
+		while($row = mysqli_fetch_array($sql4)){
+
+		  // add each row returned into an array
+		  $index[] = $row;
+
+		  // OR just echo the data:
+
+		}
+	}
+
 	
+
+	for ($i=0; $i<count($index); $i++) {
+
+		$sql5 = mysqli_query($conn, "SELECT * FROM tbvektor WHERE docid = '".$index[$i]['docid']."'");
+
+			while($row = mysqli_fetch_array($sql5)){
+
+			  // add each row returned into an array
+			  $vektor[] = $row;
+
+			  $vektor = array_map("unserialize", array_unique(array_map("serialize", $vektor)));
+
+			  // OR just echo the data:
+
+			}
+	}
+
 	$jumlahmirip = 0;
-	
-	$resDocId = mysqli_query($conn, "SELECT * FROM tbvektor_copy ORDER BY docid");
-	while ($rowDocId = mysqli_fetch_array($resDocId)) {
+
+
+	for ($i=0; $i<count($vektor); $i++) {
+
 	
 		$dotproduct1 = 0;
 		$dotproduct2 = 0;
-			
-		$docId = $rowDocId['docid'];
-		$panjangDocId = $rowDocId['panjang'];
-		
-		$resTerm = mysqli_query($conn, "SELECT * FROM tbindex_copy WHERE docid = '$docId'");
-		
-		while ($rowTerm = mysqli_fetch_array($resTerm)) {
 
+		for ($j=0; $j<count($index); $j++) {
 
-			for ($i=0; $i<count($aquery); $i++) {
+			for ($k=0; $k<count($query); $k++) {
 				//'<pre>'; print_r($aquery); echo '</pre>';
 
+				//if($adaTerm[$k] == 1){
 
-				if($adaTerm[$i] == 1){
-					//echo '<pre>'; print_r($aBobotQuery); echo '</pre>';
+					if (($index[$j]['term'] == $query[$k]) && ($index[$j]['docid'] == $vektor[$i]['docid'])) {
 
-					if ($rowTerm['term'] == $aquery[$i]) {
+						echo "Query awal";
 
-						echo "Term Query Awal: " . $aquery[$i] . "<br>";
-						echo "Row term Query Awal pd Doc: " . $rowTerm['bobot'] . "<br>";
-						echo "BobotQuery Awal pd Q : " . $aBobotQuery[$i] . "<br>";
-						echo "Q * D : " . ($aBobotQuery[$i] *  $rowTerm['bobot']). "<br>";
+						echo "Row term Query Awal pd pada Doc: " . $vektor[$i]['docid'] . "<br>";
+						echo "Row term Query Awal pd pada Index: " . $index[$j]['term'] . "<br>";
+						echo "Row term Query Awal pd Query: " . $query[$k] . "<br>";
+						echo "Row term Query Awal pd Doc: " . $index[$j]['bobot'] . "<br>";
+						echo "BobotQuery Awal pd Q : " . $aBobotQuery[$k] . "<br>";
 
-						$dotproduct1 = $dotproduct1 + $rowTerm['bobot'] * $aBobotQuery[$i];
+						$dotproduct1 = $dotproduct1 + $aBobotQuery[$k] * $index[$j]['bobot'];
 
 						echo "Dot product 1 : " . $dotproduct1 . "<br><br>";
-						
 
 					}
+				//} 
 
-					if(($adaSinonim[$i] == 1) && ($adaTerm[$i] == 1)){
+			}//paste here
 
-						for ($j=0; $j<count($asinonim); $j++) {
+			//if(($adaSinonim[$k] == 1) && ($adaTerm[$k] == 1)){
+				for ($l=0; $l<count($totalSinonim); $l++) {
 
-							if ($rowTerm['term'] == $asinonim[$j]) {
+					if (($index[$j]['term'] == $totalSinonim[$l]) && ($index[$j]['docid'] == $vektor[$i]['docid'])) {
 
-								$dotproduct2 = $dotproduct2 + $rowTerm['bobot'] * $aBobotSinonim[$j];
+						$dotproduct2 = $dotproduct2 + $index[$j]['bobot'] * $aBobotSinonim[$l];
 
-								echo "Term Sinonim: " . $asinonim[$j] . "<br>";
-								echo "Row term Sinonim pd Doc: " . $rowTerm['bobot'] . "<br>";
-								echo "BobotSinonim pd Q: " . $aBobotSinonim[$j] . "<br>";
-								echo "Q * D : " . ($aBobotSinonim[$j] *  $rowTerm['bobot']). "<br>";
-								echo "Dot product 2 : " . $dotproduct2 . "<br>";
-								
-								//echo "Query exp " . $dotproduct . "<br>";	
-								
-								} //endif	
-							}
-						} //endfor	
-					} //endif
-				}
-			}
+						echo "Row term Query Expansion pd pada Doc: " . $vektor[$i]['docid'] . "<br>";
+						echo "Term Sinonim: " . $totalSinonim[$l] . "<br>";
+						echo "Row term Sinonim pd Q: " . $index[$j]['bobot'] . "<br>";
+						echo "BobotSinonim pd Q: " . $aBobotSinonim[$l] . "<br>";
+						echo "Q * D : " . ($aBobotSinonim[$l] *  $index[$j]['bobot']). "<br>";
+						echo "Dot product 2 : " . $dotproduct2 . "<br><br>";
+						
+						
+						} //endif	
+					}
+			//}
+
+		}
 
 		if (($dotproduct1 != 0) || ($dotproduct2 != 0)) {
 
 			echo "Dot product1 total = " . $dotproduct1 . "<br>";
 			echo "Dot product2  total = " . $dotproduct2 . "<br>";
+			echo "Panjang Vektor Dokumen = " . $vektor[$i]['panjang'] . "<br>";
 
-			$sim = ($dotproduct1 + $dotproduct2) / ($panjangQueryTotal * $panjangDocId);
+			$sim = ($dotproduct1 + $dotproduct2) / ($panjangQueryTotal * $vektor[$i]['panjang']);
 
 			echo "Panjang query total : "  . $panjangQueryTotal . "<br>";
 			echo "Dot product total : "  . ($dotproduct1 + $dotproduct2) . "<br>";
-			echo "Query * Bobot DocId total : "  . ($panjangQueryTotal * $panjangDocId) . "<br>";
+			echo "Query * Bobot DocId total : "  . ($panjangQueryTotal * $vektor[$i]['panjang']) . "<br>";
 			echo "Sim = " . $sim  . "<br>";
 
-			echo "<br>";
-			echo "<hr>";
-			$resInsertCache = mysqli_query($conn, "INSERT INTO tbcache (query, docid, nilai) VALUES ('$query', '$docId', $sim)");
+			//echo "<br>";
+			//echo "<hr>";
+
+			$result[] = array($query,$vektor[$i]['docid'],$sim);
+
 			$jumlahmirip++;
-		} 
-			
+
+
+			$docId = $vektor[$i]['docid'];
+
+			echo "<hr>";
+		}
+
+
 	if ($jumlahmirip == 0) {
-		$resInsertCache = mysqli_query($conn, "INSERT INTO tbcache (query, docid, nilai) VALUES ('$query', 0, 0)");
+		$result[] = array($query,0,0);
 		}
 	}
+
+	echo "<pre>";
+	print_r($result);
+	echo "</pre>";
+
+	mysqli_query($conn, "TRUNCATE TABLE tbcache");
+
+	$data = array();
+	foreach($result as $row) {
+	    $docId = mysqli_real_escape_string($conn, $row[1]);
+	    $sim = (float) $row[2];
+	    $data[] = "('$docId', $sim)";
+	}
+
+	$values = implode(',', $data);
+
+	$sql = "INSERT INTO tbcache (docid, nilai) VALUES $values";
+
+	echo $sql;
+	
+	$conn->query($sql);
+	//echo "Panjang query total  = " . $panjangQueryTotal . "<br><br>";
+
 }
 
 hitungsim($query);
 
-$result = mysqli_query($conn, "SELECT DISTINCT judul, nama, nama_jurusan, label, semua.doc AS nama_doc, nilai FROM semua INNER JOIN tbcache ON semua.doc = tbcache.docid ORDER BY nilai DESC");
+
+$result = mysqli_query($conn, "SELECT tbcache.id AS id, judul, nama, nama_jurusan, label, semua.doc AS nama_doc, nilai FROM semua INNER JOIN tbcache ON semua.doc = tbcache.docid ORDER BY nilai DESC");
 
 echo "<table border=1>";
 echo "<tr>";
+echo "<th>"; echo "No"; echo "</th>";
 echo "<th>"; echo "Judul"; echo "</th>";
 echo "<th>"; echo "Nama"; echo "</th>";
 echo "<th>"; echo "Nama Jurusan"; echo "</th>";
@@ -251,6 +395,7 @@ echo "</tr>";
 while($row = mysqli_fetch_array($result)){
 
     echo "<tr>";
+    echo "<td>"; echo $row["id"]; echo "</td>";
     echo "<td>"; echo $row["judul"]; echo "</td>";
     echo "<td>"; echo $row["nama"]; echo "</td>";
     echo "<td>"; echo $row["nama_jurusan"]; echo "</td>";
@@ -261,5 +406,12 @@ while($row = mysqli_fetch_array($result)){
 
 }
 echo "</table>";
+
+$end5 = microtime(true);
+
+echo '<br><strong>Total waktu: </strong>', $end5 - $start5, ' microsecond<br>';
+
+
+
 
 ?>

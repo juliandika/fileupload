@@ -78,9 +78,9 @@
 
         if(!empty($filter[$i]) && strlen($filter[$i]) > 2){
 
-            mysqli_query($conn, "INSERT INTO dok_2 (nama_file, tokenstem) VALUES('".$nama_file."', '".$filter[$i]."')");
+            mysqli_query($conn, "INSERT INTO dok2_copy (nama_file, tokenstem) VALUES('".$nama_file."', '".$filter[$i]."')");
 
-            echo "jajda";
+            //echo "jajda";
         }
 
               
