@@ -8,7 +8,7 @@ $query = $_GET['keyword'];
 
 //$query = implode(' ', array_unique(explode(' ', $raw_query)));
 //mysqli_query($conn, "TRUNCATE TABLE tbcache");
-mysqli_query($conn, "TRUNCATE TABLE tbcache");
+mysqli_query($conn, "TRUNCATE TABLE tb_cache");
 
 function hitungsim($query) {
 
@@ -16,7 +16,7 @@ function hitungsim($query) {
 
 	$result = array();
 
-	$sql = "SELECT Count(*) as n FROM tbvektor";
+	$sql = "SELECT Count(*) as n FROM tb_vektor";
 
 	$resn = $conn->query($sql);
 
@@ -46,7 +46,7 @@ function hitungsim($query) {
 
 		//$sql2 = "SELECT Count(*) as N from tbindex WHERE term like '$aquery[$i]'";
 
-		$sql3 = mysqli_query($conn, "SELECT * FROM tbindex WHERE term like '$aquery[$i]' LIMIT 1");
+		$sql3 = mysqli_query($conn, "SELECT * FROM tb_index WHERE term like '$aquery[$i]' LIMIT 1");
 
 		if(mysqli_num_rows($sql3) > 0){
 
@@ -93,7 +93,7 @@ function hitungsim($query) {
 
 			echo "<br>" . "Teshello" . "<br>";
 
-			$sin = "SELECT * FROM sinonim WHERE kata LIKE '$aquery[$i]'";
+			$sin = "SELECT * FROM tb_tesaurus WHERE kata LIKE '$aquery[$i]'";
 
 	    	$res = $conn->query($sin);
 			
@@ -127,16 +127,14 @@ function hitungsim($query) {
 							//echo "Panjang Query Sinonim = " . $panjangQuerySinonim . "<br>";
 
 							$totalSinonim[] = $asinonim[$j];
+
+							$adaSinonim = 1;
 						
 
 						}
-
-						
+	
 
 					}
-
-					
-
 					
 
 				}/*
@@ -217,6 +215,10 @@ function hitungsim($query) {
 
 	$panjangQueryTotal = sqrt($panjangQuery + $panjangQuerySinonim);
 
+	$panjangQueryAwal = sqrt($panjangQuery);
+
+	$panjangQueryExpansion = sqrt($panjangQuerySinonim);
+
 	echo "Panjang query total: " . $panjangQueryTotal . "<br>";
 
 
@@ -234,7 +236,7 @@ function hitungsim($query) {
 
 	for ($i=0; $i<count($querytotal); $i++) {
 
-		$sql4 = mysqli_query($conn, "SELECT * FROM tbindex WHERE term like '$querytotal[$i]'");
+		$sql4 = mysqli_query($conn, "SELECT * FROM tb_index WHERE term like '$querytotal[$i]'");
 
 		while($row = mysqli_fetch_array($sql4)){
 
@@ -250,7 +252,7 @@ function hitungsim($query) {
 
 	for ($i=0; $i<count($index); $i++) {
 
-		$sql5 = mysqli_query($conn, "SELECT * FROM tbvektor WHERE docid = '".$index[$i]['docid']."'");
+		$sql5 = mysqli_query($conn, "SELECT * FROM tb_vektor WHERE nama_file = '".$index[$i]['nama_file']."'");
 
 			while($row = mysqli_fetch_array($sql5)){
 
@@ -280,11 +282,11 @@ function hitungsim($query) {
 
 				//if($adaTerm[$k] == 1){
 
-					if (($index[$j]['term'] == $query[$k]) && ($index[$j]['docid'] == $vektor[$i]['docid'])) {
+					if (($index[$j]['term'] == $query[$k]) && ($index[$j]['nama_file'] == $vektor[$i]['nama_file'])) {
 
 						echo "Query awal";
 
-						echo "Row term Query Awal pd pada Doc: " . $vektor[$i]['docid'] . "<br>";
+						echo "Row term Query Awal pd pada Doc: " . $vektor[$i]['nama_file'] . "<br>";
 						echo "Row term Query Awal pd pada Index: " . $index[$j]['term'] . "<br>";
 						echo "Row term Query Awal pd Query: " . $query[$k] . "<br>";
 						echo "Row term Query Awal pd Doc: " . $index[$j]['bobot'] . "<br>";
@@ -302,17 +304,16 @@ function hitungsim($query) {
 			//if(($adaSinonim[$k] == 1) && ($adaTerm[$k] == 1)){
 				for ($l=0; $l<count($totalSinonim); $l++) {
 
-					if (($index[$j]['term'] == $totalSinonim[$l]) && ($index[$j]['docid'] == $vektor[$i]['docid'])) {
+					if (($index[$j]['term'] == $totalSinonim[$l]) && ($index[$j]['nama_file'] == $vektor[$i]['nama_file'])) {
 
 						$dotproduct2 = $dotproduct2 + $index[$j]['bobot'] * $aBobotSinonim[$l];
 
-						echo "Row term Query Expansion pd pada Doc: " . $vektor[$i]['docid'] . "<br>";
+						echo "Row term Query Expansion pd pada Doc: " . $vektor[$i]['nama_file'] . "<br>";
 						echo "Term Sinonim: " . $totalSinonim[$l] . "<br>";
 						echo "Row term Sinonim pd Q: " . $index[$j]['bobot'] . "<br>";
 						echo "BobotSinonim pd Q: " . $aBobotSinonim[$l] . "<br>";
 						echo "Q * D : " . ($aBobotSinonim[$l] *  $index[$j]['bobot']). "<br>";
 						echo "Dot product 2 : " . $dotproduct2 . "<br><br>";
-						
 						
 						} //endif	
 					}
@@ -322,26 +323,40 @@ function hitungsim($query) {
 
 		if (($dotproduct1 != 0) || ($dotproduct2 != 0)) {
 
-			echo "Dot product1 total = " . $dotproduct1 . "<br>";
-			echo "Dot product2  total = " . $dotproduct2 . "<br>";
-			echo "Panjang Vektor Dokumen = " . $vektor[$i]['panjang'] . "<br>";
+			if($adaSinonim == 1 && $dotproduct1 != 0){
 
-			$sim = ($dotproduct1 + $dotproduct2) / ($panjangQueryTotal * $vektor[$i]['panjang']);
+				echo "Dot product1  total = " . $dotproduct1 . "<br>";
+				echo "Panjang Vektor Dokumen = " . $vektor[$i]['panjang_vektor'] . "<br>";
 
-			echo "Panjang query total : "  . $panjangQueryTotal . "<br>";
-			echo "Dot product total : "  . ($dotproduct1 + $dotproduct2) . "<br>";
-			echo "Query * Bobot DocId total : "  . ($panjangQueryTotal * $vektor[$i]['panjang']) . "<br>";
-			echo "Sim = " . $sim  . "<br>";
+				$sim = $dotproduct1 / ($panjangQueryAwal * $vektor[$i]['panjang_vektor']);
+
+				echo "Panjang query total : "  . $panjangQueryAwal . "<br>";
+				echo "Dot product total : "  . $dotproduct1 . "<br>";
+				echo "Query * Bobot DocId total : "  . ($panjangQueryAwal * $vektor[$i]['panjang_vektor']) . "<br>";
+				echo "Sim = " . $sim  . "<br>";
+
+			}else if($adaSinonim == 1 && $dotproduct1 == 0){
+
+				echo "Dot product2 total = " . $dotproduct2 . "<br>";
+				echo "Panjang Vektor Dokumen = " . $vektor[$i]['panjang_vektor'] . "<br>";
+
+				$sim = $dotproduct2 / ($panjangQueryExpansion * $vektor[$i]['panjang_vektor']);
+
+				echo "Panjang query total : "  . $panjangQueryExpansion . "<br>";
+				echo "Dot product total : "  . $dotproduct2 . "<br>";
+				echo "Query * Bobot DocId total : "  . ($panjangQueryExpansion * $vektor[$i]['panjang_vektor']) . "<br>";
+				echo "Sim = " . $sim  . "<br>";
+			}
 
 			//echo "<br>";
 			//echo "<hr>";
 
-			$result[] = array($query,$vektor[$i]['docid'],$sim);
+			$result[] = array($query,$vektor[$i]['nama_file'],$sim);
 
 			$jumlahmirip++;
 
 
-			$docId = $vektor[$i]['docid'];
+			$docId = $vektor[$i]['nama_file'];
 
 			echo "<hr>";
 		}
@@ -352,11 +367,7 @@ function hitungsim($query) {
 		}
 	}
 
-	echo "<pre>";
-	print_r($result);
-	echo "</pre>";
-
-	mysqli_query($conn, "TRUNCATE TABLE tbcache");
+	mysqli_query($conn, "TRUNCATE TABLE tb_cache");
 
 	$data = array();
 	foreach($result as $row) {
@@ -367,10 +378,8 @@ function hitungsim($query) {
 
 	$values = implode(',', $data);
 
-	$sql = "INSERT INTO tbcache (docid, nilai) VALUES $values";
+	$sql = "INSERT INTO tb_cache (nama_file, nilai_sim) VALUES $values";
 
-	echo $sql;
-	
 	$conn->query($sql);
 	//echo "Panjang query total  = " . $panjangQueryTotal . "<br><br>";
 
@@ -379,7 +388,7 @@ function hitungsim($query) {
 hitungsim($query);
 
 
-$result = mysqli_query($conn, "SELECT tbcache.id AS id, judul, nama, nama_jurusan, label, semua.doc AS nama_doc, nilai FROM semua INNER JOIN tbcache ON semua.doc = tbcache.docid ORDER BY nilai DESC");
+$result = mysqli_query($conn, "SELECT judul, nama, nama_jurusan, nama_fakultas, nama_label, tb_dokumen.nama_file AS nama_file, nilai_sim FROM tb_dokumen INNER JOIN tb_cache ON tb_dokumen.nama_file = tb_cache.nama_file INNER JOIN tb_mahasiswa ON tb_mahasiswa.nim = tb_dokumen.nim INNER JOIN tb_fakultas ON tb_mahasiswa.id_fakultas = tb_fakultas.id_fakultas INNER JOIN tb_jurusan ON tb_mahasiswa.id_jurusan = tb_jurusan.id_jurusan INNER JOIN tb_label ON tb_label.id_label = tb_dokumen.id_label ORDER BY nilai_sim DESC");
 
 echo "<table border=1>";
 echo "<tr>";
@@ -399,9 +408,9 @@ while($row = mysqli_fetch_array($result)){
     echo "<td>"; echo $row["judul"]; echo "</td>";
     echo "<td>"; echo $row["nama"]; echo "</td>";
     echo "<td>"; echo $row["nama_jurusan"]; echo "</td>";
-    echo "<td>"; echo $row["label"]; echo "</td>";
-    echo "<td>"; echo $row["nama_doc"]; echo "</td>";
-    echo "<td>"; echo $row["nilai"]; echo "</td>";
+    echo "<td>"; echo $row["nama_label"]; echo "</td>";
+    echo "<td>"; echo $row["nama_file"]; echo "</td>";
+    echo "<td>"; echo $row["nilai_sim"]; echo "</td>";
     echo "</tr>";
 
 }
@@ -410,8 +419,6 @@ echo "</table>";
 $end5 = microtime(true);
 
 echo '<br><strong>Total waktu: </strong>', $end5 - $start5, ' microsecond<br>';
-
-
 
 
 ?>

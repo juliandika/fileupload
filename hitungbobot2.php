@@ -77,7 +77,7 @@
 
 	$values = implode(',', $data);
 
-	$sql = "INSERT INTO tbindex_real (term, docid, freq, bobot) VALUES $values";
+	$sql = "INSERT INTO tb_index (term, docid, freq, bobot) VALUES $values";
 
 	echo $sql;
 

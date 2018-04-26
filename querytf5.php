@@ -73,9 +73,6 @@ function hitungsim($query) {
 				  print_r($query);
 				  echo "</pre>";
 
-				  $panjangQuery = $panjangQuery + $idf * $idf;
-
-				  echo "panjang query" . $panjangQuery;
 
 				  
 				  $AdaTerm = 1;

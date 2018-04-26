@@ -37,23 +37,25 @@
 
     $teks4 = preg_replace('/[-\n\r]/', ' ', $teks3);*/
 
+    echo "<br><br>" . $string . "<br><br>";
+
     $teks = preg_replace('/[^a-zA-Z -]/', '', $string);
 
-    $teks2 = preg_replace('/\b\w\b\s?/', '', $teks);
+    echo "<br><br>" . $teks . "<br><br>";
 
-    $teks3 = preg_replace('/\s\s+/', ' ', $teks2);
+    $teks4 = preg_replace('/[-\n\r]/', ' ', $teks);
 
-    $teks4 = preg_replace('/[-\n\r]/', ' ', $teks3);
+    echo  "<br><br>" . $teks4 . "<br><br>";
 
     $teks5 = strtolower($teks4);
 
-    echo $teks5;
+    echo "<br><br>" . $teks5 . "<br><br>";
 
     $teks6 = explode(" ",$teks5);
 
     //var_dump($teks5);
 
-    $remove_stopword = "SELECT * FROM stopwords";
+    $remove_stopword = "SELECT * FROM tb_stopwords";
 
     $hasil = $conn->query($remove_stopword);
 
@@ -80,7 +82,9 @@
 
             mysqli_query($conn, "INSERT INTO dok2_copy (nama_file, tokenstem) VALUES('".$nama_file."', '".$filter[$i]."')");
 
-            //echo "jajda";
+            $strlen = strlen($filter[$i]);
+
+            echo $strlen
         }
 
               
